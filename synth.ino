@@ -4,7 +4,9 @@
 
 // TODO: rewrite when all added
 #define BUTTON_1_PIN          2
-#define BUTTON_CHORD_PIN      4
+#define BUTTON_CHORD_PIN      0
+#define BUTTON_OCTAVE_DOWN    1
+#define BUTTON_OCTAVE_UP      2
 #define LED_SELECT_PIN_6      6
 #define LED_SELECT_PIN_7      7
 #define LED_SELECT_PIN_8      8
@@ -15,11 +17,9 @@
 
 #define MIDI_CMD_NOTE_OFF    0x80
 #define MIDI_CMD_NOTE_ON     0x90
-#define MIDI_CMD_OCTAVE_DOWN 0xF4
-#define MIDI_CMD_OCTAVE_UP   0xF5
-#define MIDI_CMD_CHORDS      0xF9
+#define MIDI_CMD_CHORDS      0xF4
 
-#define MIDI_BASE_TONE       0x0C    // C1
+#define MIDI_BASE_TONE       0x36    // C3
 #define MIDI_VELOCITY        0x45
 #define TONE_COUNT           12
 
@@ -29,13 +29,13 @@ unsigned long previousTimeLeds;
 unsigned long previousTimeButtons;
 
 const uint8_t crtlButtons[] = {BUTTON_CHORD_PIN};
-const uint8_t crtlCommands[] = {MIDI_CMD_OCTAVE_DOWN, MIDI_CMD_OCTAVE_UP, MIDI_CMD_CHORDS};
 const uint8_t toneButtons[] = {BUTTON_1_PIN};
 const uint8_t outLeds[] = {LED_SELECT_PIN_8, LED_SELECT_PIN_7, LED_SELECT_PIN_6};
 const uint8_t colourLeds[] = {LED_PIN_R, LED_PIN_G, LED_PIN_B};
 
 const int outLedCount = sizeof(outLeds) / sizeof(outLeds[0]);
 uint8_t led = -1;
+uint8_t octaveFactor = 0;
 
 const int colours[12][3] = {{255, 0, 0},      // RED
                             {255, 0, 25},     // PINK 1
@@ -96,16 +96,22 @@ uint8_t sendNote(int cmd, int pitch, int velocity) {
 
 
 int8_t readButtons() {  // TODO handle returned value errors (ovo se neće dešavat, ali svejedno)
-  for(int i = 0; i < sizeof(toneButtons); i++) {
-    if (digitalRead(BUTTON_CHORD_PIN) == HIGH) {  
-      sendCtrl(crtlCommands[i]);
-    } 
+  if (digitalRead(BUTTON_CHORD_PIN) == HIGH) {  
+    sendCtrl(MIDI_CMD_CHORDS);
   }
+
+  if (digitalRead(BUTTON_OCTAVE_DOWN) == HIGH) 
+    if(octaveFactor - 1 >= 0) octaveFactor--;
+
+  if (digitalRead(BUTTON_OCTAVE_UP) == HIGH) 
+    if(octaveFactor + 1 <= 9) octaveFactor++;
 
   
   for(int i = 0; i < sizeof(toneButtons); i++) {
     if (digitalRead(toneButtons[i]) == HIGH) {
-      sendNote(MIDI_CMD_NOTE_ON, MIDI_BASE_TONE + i, MIDI_VELOCITY);
+      sendNote(MIDI_CMD_NOTE_ON,
+              (MIDI_BASE_TONE + i) * octaveFactor,
+              MIDI_VELOCITY);
     } 
   }
 
@@ -132,6 +138,7 @@ void loop() {
     previousTimeLeds = millis();
   }
 
+  /* -------------------- BUTTONS -------------------- */
   if ((currentTime - previousTimeButtons) > INTERVAL_MS_BUTTONS) {  
     readButtons();
     previousTimeButtons = millis();
