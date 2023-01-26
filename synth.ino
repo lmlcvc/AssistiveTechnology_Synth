@@ -6,7 +6,7 @@
 #define BUTTON_1_PIN          2
 #define BUTTON_CHORD_PIN      0
 #define BUTTON_OCTAVE_DOWN    1
-#define BUTTON_OCTAVE_UP      2
+#define BUTTON_OCTAVE_UP      4
 #define LED_SELECT_PIN_6      6
 #define LED_SELECT_PIN_7      7
 #define LED_SELECT_PIN_8      8
@@ -28,7 +28,7 @@ unsigned long currentTime;
 unsigned long previousTimeLeds;
 unsigned long previousTimeButtons;
 
-const uint8_t crtlButtons[] = {BUTTON_CHORD_PIN};
+const uint8_t crtlButtons[] = {BUTTON_CHORD_PIN, BUTTON_OCTAVE_DOWN, BUTTON_OCTAVE_UP};
 const uint8_t toneButtons[] = {BUTTON_1_PIN};
 const uint8_t outLeds[] = {LED_SELECT_PIN_8, LED_SELECT_PIN_7, LED_SELECT_PIN_6};
 const uint8_t colourLeds[] = {LED_PIN_R, LED_PIN_G, LED_PIN_B};
